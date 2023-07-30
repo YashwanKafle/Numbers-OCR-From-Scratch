@@ -2,6 +2,7 @@ from PIL import Image
 import numpy as np
 
 
+# To read and save ourown image (not from dataset)
 def read_image(path):
     return np.asarray(Image.open(path).convert("L"))
 
@@ -18,6 +19,7 @@ TRAIN_DATA_FILENAME = "train-images-idx3-ubyte"
 TRAIN_LABELS_FILENAME = "train-labels-idx1-ubyte"
 
 
+# to convert bytes to integer
 def bytes_to_int(bytes_data):
     return int.from_bytes(bytes_data, "big")
 
@@ -98,33 +100,52 @@ def knn(X_train, y_train, x_test, k=5):
         ]
         candidates = [bytes_to_int(y_train[idx]) for idx in sorted_distance_indices[:k]]
         y_pred = get_most_frequent_element(candidates)
-    return y_pred
+        y_preds.append(y_pred)
+
+    return y_preds
 
 
 def main():
-    X_train = read_images(TRAIN_DATA_FILENAME, 500)
-    y_train = read_labels(TRAIN_LABELS_FILENAME)
-    X_test = read_images(TEST_DATA_FILENAME, 20)
-    y_test = read_labels(TEST_LABELS_FILENAME, 20)
+    Train_DATA_LENGTH = 1000
+    X_train = read_images(TRAIN_DATA_FILENAME, Train_DATA_LENGTH)
+    y_train = read_labels(TRAIN_LABELS_FILENAME, Train_DATA_LENGTH)
 
-    # for idx, test_sample in enumerate(X_test):
-    #     save_image(test_sample, f"{TEST_DIR}{idx}.png")
+    # our own image test
+    ourtest = False
 
-    X_test = [read_image("ourtest.png")]
+    if ourtest:
+        # specify image paths
+        img_paths = ["ourtest.png", "ourtest.png"]
 
-    X_train = extract_features(X_train)
-    X_test = extract_features(X_test)
+        X_test = [read_image(path) for path in img_paths]
+        X_train = extract_features(X_train)
+        X_test = extract_features(X_test)
 
-    y_pred = knn(X_train, y_train, X_test, 5)
+        y_preds = knn(X_train, y_train, X_test, 5)
 
-    # correct_prediction = sum(
-    #     [
-    #         (y_pred_i == bytes_to_int(y_test_i))
-    #         for y_pred_i, y_test_i in zip(y_pred, y_test)
-    #     ]
-    # ) / len(y_test)
-    # print(correct_prediction)
-    print(int(y_pred))
+        for img_name, y_pred in zip(img_paths, y_preds):
+            print(f"{img_name} >  prediction : {y_pred}")
+    else:
+        TEST_SIZE = 10
+
+        X_test = read_images(TEST_DATA_FILENAME, TEST_SIZE)
+        y_test = read_labels(TEST_LABELS_FILENAME, TEST_SIZE)
+
+        for idx, test_sample in enumerate(X_test):
+            save_image(test_sample, f"{TEST_DIR}{idx}.png")
+
+        X_train = extract_features(X_train)
+        X_test = extract_features(X_test)
+        y_preds = knn(X_train, y_train, X_test, 5)
+
+        correct_prediction = sum(
+            [
+                (y_pred_i == bytes_to_int(y_test_i))
+                for y_pred_i, y_test_i in zip(y_preds, y_test)
+            ]
+        ) / len(y_test)
+
+        print(correct_prediction)
 
 
 if __name__ == "__main__":
