@@ -1,6 +1,3 @@
-def main():
-    n =2
-    c = "2"
-    return n + c
-
-main()
+import random
+n = input()
+print(n + 1)
